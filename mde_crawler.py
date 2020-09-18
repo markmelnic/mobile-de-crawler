@@ -66,3 +66,29 @@ class MDE_CRAWLER:
         with open(LISTINGS_CSV, mode="r", newline="") as csv_file:
             csv_reader = csv.reader(csv_file)
             return list(csv_reader)
+
+    def live_graph(self):
+        fig = plt.figure()
+        gplot = fig.add_subplot(1,1,1)
+        plt.style.use('seaborn-darkgrid')
+
+        # al - active links
+        # lu - listings urls
+        # il - ignored links
+        al_history = []
+        il_history = []
+        lu_history = []
+
+        def animate_graph(i):
+            al_history.append(len(self.active_links))
+            il_history.append(len(self.ignored_urls))
+            lu_history.append(len(self.listings_urls))
+
+            gplot.clear()
+            gplot.plot(il_history, al_history, label="Active")
+            gplot.plot(il_history, il_history, label="Ignored")
+            gplot.plot(il_history, lu_history, label="Listings")
+            gplot.legend()
+
+        ani = animation.FuncAnimation(fig, animate_graph, interval=1000)
+        plt.show()
