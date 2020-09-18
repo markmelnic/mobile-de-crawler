@@ -1,5 +1,8 @@
-import re, csv, requests
+import re, csv, time, requests, threading
 from bs4 import BeautifulSoup
+
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebkit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
@@ -15,6 +18,9 @@ class MDE_CRAWLER:
         self.ignored_urls = []
         self.first_request()
 
+        graph_thread = threading.Thread(target=self.live_graph, args=())
+        graph_thread.start()
+
         while True:
             with open(LISTINGS_CSV, "a", newline="") as listings_file:
                 self.csv_writer = csv.writer(listings_file)
@@ -24,7 +30,6 @@ class MDE_CRAWLER:
                             self.active_links.remove(url)
                             self.ignored_urls.append(url)
                         else:
-                            print("Tree size =", len(self.active_links))
                             self.active_links.remove(url)
                             self.ignored_urls.append(url)
                             try:
@@ -32,6 +37,7 @@ class MDE_CRAWLER:
                             except requests.exceptions.MissingSchema:
                                 pass
                 except KeyboardInterrupt:
+                    graph_thread.join()
                     pass
 
     def first_request(self):
@@ -42,3 +48,21 @@ class MDE_CRAWLER:
             for url in soup.find_all("a", attrs={"href": re.compile("^https://")})
             if "mobile.de" in url["href"]
         ]
+
+    def get_links(self, url):
+        response = requests.get(url, headers=HEADERS)
+        soup = BeautifulSoup(response.content, "html.parser")
+        for url in soup.find_all("a"):
+            try:
+                if "suchen.mobile.de/fahrzeuge/details.html?id" in url["href"]:
+                    self.csv_writer.writerow([url["href"]])
+                    self.listings_urls.append(url["href"])
+                elif "suchen.mobile.de" in url["href"]:
+                    self.active_links.append(url["href"])
+            except KeyError:
+                pass
+
+    def load_listings(self):
+        with open(LISTINGS_CSV, mode="r", newline="") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            return list(csv_reader)
