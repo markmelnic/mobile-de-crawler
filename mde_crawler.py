@@ -13,11 +13,13 @@ LISTINGS_CSV = "listings.csv"
 
 class MDE_CRAWLER:
     def __init__(self):
+        # initialize arrays
         self.active_links = []
-        self.listings_urls = []
+        self.listings_urls = self.load_listings()
         self.ignored_urls = []
         self.first_request()
 
+        # start the live graph in a separate thread
         graph_thread = threading.Thread(target=self.live_graph, args=())
         graph_thread.start()
 
@@ -26,9 +28,11 @@ class MDE_CRAWLER:
                 self.csv_writer = csv.writer(listings_file)
                 try:
                     for url in self.active_links:
+                        # skip if url has been processed already
                         if url in self.ignored_urls:
                             self.active_links.remove(url)
                             self.ignored_urls.append(url)
+                        # process url and get new links
                         else:
                             self.active_links.remove(url)
                             self.ignored_urls.append(url)
@@ -37,9 +41,10 @@ class MDE_CRAWLER:
                             except requests.exceptions.MissingSchema:
                                 pass
                 except KeyboardInterrupt:
-                    graph_thread.join()
                     pass
+        graph_thread.join()
 
+    # make the first request if there are no active links
     def first_request(self):
         response = requests.get(MDE_URL, headers=HEADERS)
         soup = BeautifulSoup(response.content, "html.parser")
@@ -49,28 +54,36 @@ class MDE_CRAWLER:
             if "mobile.de" in url["href"]
         ]
 
+    # get new links 
     def get_links(self, url):
         response = requests.get(url, headers=HEADERS)
         soup = BeautifulSoup(response.content, "html.parser")
         for url in soup.find_all("a"):
             try:
                 if "suchen.mobile.de/fahrzeuge/details.html?id" in url["href"]:
-                    self.csv_writer.writerow([url["href"]])
-                    self.listings_urls.append(url["href"])
+                    if not url in self.listings_urls:
+                        self.csv_writer.writerow([url["href"]])
+                        self.listings_urls.append(url["href"])
                 elif "suchen.mobile.de" in url["href"]:
                     self.active_links.append(url["href"])
             except KeyError:
                 pass
 
+    # load indexed listings
     def load_listings(self):
-        with open(LISTINGS_CSV, mode="r", newline="") as csv_file:
-            csv_reader = csv.reader(csv_file)
-            return list(csv_reader)
+        try:
+            with open(LISTINGS_CSV, mode="r", newline="") as csv_file:
+                csv_reader = csv.reader(csv_file)
+                return list(csv_reader)
+        except FileNotFoundError:
+            return []
 
+    # generate the live graph
     def live_graph(self):
+        plt.style.use("dark_background")
+
         fig = plt.figure()
-        gplot = fig.add_subplot(1,1,1)
-        plt.style.use('seaborn-darkgrid')
+        gplot = fig.add_subplot(1, 1, 1)
 
         # al - active links
         # lu - listings urls
@@ -85,9 +98,11 @@ class MDE_CRAWLER:
             lu_history.append(len(self.listings_urls))
 
             gplot.clear()
-            gplot.plot(il_history, al_history, label="Active")
-            gplot.plot(il_history, il_history, label="Ignored")
-            gplot.plot(il_history, lu_history, label="Listings")
+            gplot.plot(il_history, al_history, label="Active links")
+            gplot.plot(il_history, lu_history, label="Nr. of listings")
+            gplot.set_title('Crawler Progress Visualizer')
+            gplot.set_xlabel('Processed links')
+            gplot.set_ylabel('Number of urls')
             gplot.legend()
 
         ani = animation.FuncAnimation(fig, animate_graph, interval=1000)
