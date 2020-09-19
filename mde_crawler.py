@@ -16,7 +16,7 @@ class MDE_CRAWLER:
         # initialize arrays
         self.active_links = []
         self.listings_urls = self.load_listings()
-        self.ignored_urls = []
+        self.processed_urls = []
         self.first_request()
 
         # start the live graph in a separate thread
@@ -29,13 +29,13 @@ class MDE_CRAWLER:
                 try:
                     for url in self.active_links:
                         # skip if url has been processed already
-                        if url in self.ignored_urls:
+                        if url in self.processed_urls:
                             self.active_links.remove(url)
-                            self.ignored_urls.append(url)
+                            self.processed_urls.append(url)
                         # process url and get new links
                         else:
                             self.active_links.remove(url)
-                            self.ignored_urls.append(url)
+                            self.processed_urls.append(url)
                             try:
                                 self.get_links(url)
                             except requests.exceptions.MissingSchema:
@@ -64,6 +64,7 @@ class MDE_CRAWLER:
                     if not url in self.listings_urls:
                         self.csv_writer.writerow([url["href"]])
                         self.listings_urls.append(url["href"])
+                        self.active_links.append(url["href"])
                 elif "suchen.mobile.de" in url["href"]:
                     self.active_links.append(url["href"])
             except KeyError:
@@ -82,28 +83,49 @@ class MDE_CRAWLER:
     def live_graph(self):
         plt.style.use("dark_background")
 
-        fig = plt.figure()
-        gplot = fig.add_subplot(1, 1, 1)
+        fig, (links_plot, perf_plot) = plt.subplots(2)
+
+        #timestamps = []
+        #try:
+        #    timestamps.append(time.time() - timestamps[-1])
+        #except IndexError:
+        #    timestamps.append(time.time())
+
+        # performance plot data
+        interval_processed = []
 
         # al - active links
+        # pl - processed links
         # lu - listings urls
-        # il - ignored links
         al_history = []
-        il_history = []
+        pl_history = []
         lu_history = []
 
-        def animate_graph(i):
+        def animate(i):
+            # links plot
             al_history.append(len(self.active_links))
-            il_history.append(len(self.ignored_urls))
+            pl_history.append(len(self.processed_urls))
             lu_history.append(len(self.listings_urls))
 
-            gplot.clear()
-            gplot.plot(il_history, al_history, label="Active links")
-            gplot.plot(il_history, lu_history, label="Nr. of listings")
-            gplot.set_title('Crawler Progress Visualizer')
-            gplot.set_xlabel('Processed links')
-            gplot.set_ylabel('Number of urls')
-            gplot.legend()
+            links_plot.clear()
+            links_plot.plot(pl_history, al_history, label="Active links", color="#f4a261")
+            links_plot.plot(pl_history, lu_history, label="Nr. of listings", color="#2a9d8f")
+            links_plot.set_title('Crawler Progress Visualizer')
+            links_plot.set_xlabel('Processed links')
+            links_plot.set_ylabel('Number of urls')
+            links_plot.legend()
 
-        ani = animation.FuncAnimation(fig, animate_graph, interval=1000)
+            # performance plot
+            try:
+                interval_processed.append(pl_history[-1] - pl_history[-2])
+            except IndexError:
+                interval_processed.append(0)
+            perf_plot.clear()
+            perf_plot.plot(pl_history, interval_processed, label="Interval", color="#e9c46a")
+            perf_plot.set_title('Crawler performance')
+            perf_plot.set_xlabel('Number of processed links')
+            perf_plot.set_ylabel('Processed per iterations')
+            perf_plot.legend()
+
+        anim = animation.FuncAnimation(fig, animate, interval=1000)
         plt.show()
