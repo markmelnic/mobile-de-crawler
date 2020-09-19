@@ -79,6 +79,13 @@ class MDE_CRAWLER:
         except FileNotFoundError:
             return []
 
+    # limit graph array size
+    def limit_size(self, array : list, item) -> None:
+        LIST_SIZE = 200
+        array.append(item)
+        if len(array) == LIST_SIZE:
+            array.pop(0)
+
     # generate the live graph
     def live_graph(self):
         plt.style.use("dark_background")
@@ -92,24 +99,24 @@ class MDE_CRAWLER:
         #    timestamps.append(time.time())
 
         # performance plot data
-        interval_processed = []
+        self.interval_processed = []
 
         # al - active links
         # pl - processed links
         # lu - listings urls
-        al_history = []
-        pl_history = []
-        lu_history = []
+        self.al_history = []
+        self.pl_history = []
+        self.lu_history = []
 
         def animate(i):
             # links plot
-            al_history.append(len(self.active_links))
-            pl_history.append(len(self.processed_urls))
-            lu_history.append(len(self.listings_urls))
+            self.limit_size(self.al_history, len(self.active_links))
+            self.limit_size(self.pl_history, len(self.processed_urls))
+            self.limit_size(self.lu_history, len(self.listings_urls))
 
             links_plot.clear()
-            links_plot.plot(pl_history, al_history, label="Active links", color="#f4a261")
-            links_plot.plot(pl_history, lu_history, label="Nr. of listings", color="#2a9d8f")
+            links_plot.plot(self.pl_history, self.al_history, label="Active links", color="#f4a261")
+            links_plot.plot(self.pl_history, self.lu_history, label="Nr. of listings", color="#2a9d8f")
             links_plot.set_title('Crawler Progress Visualizer')
             links_plot.set_xlabel('Processed links')
             links_plot.set_ylabel('Number of urls')
@@ -117,11 +124,11 @@ class MDE_CRAWLER:
 
             # performance plot
             try:
-                interval_processed.append(pl_history[-1] - pl_history[-2])
+                self.limit_size(self.interval_processed, self.pl_history[-1] - self.pl_history[-2])
             except IndexError:
-                interval_processed.append(0)
+                self.limit_size(self.interval_processed, 0)
             perf_plot.clear()
-            perf_plot.plot(pl_history, interval_processed, label="Interval", color="#e9c46a")
+            perf_plot.plot(self.pl_history, self.interval_processed, label="Interval", color="#e9c46a")
             perf_plot.set_title('Crawler performance')
             perf_plot.set_xlabel('Number of processed links')
             perf_plot.set_ylabel('Processed per iterations')
@@ -129,3 +136,6 @@ class MDE_CRAWLER:
 
         anim = animation.FuncAnimation(fig, animate, interval=1000)
         plt.show()
+
+if __name__ == "__main__":
+    crawler = MDE_CRAWLER()
