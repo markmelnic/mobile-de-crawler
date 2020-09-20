@@ -15,8 +15,6 @@ class DB:
             except sqlite3.OperationalError:
                 pass
 
-        self.conn.close()
-
     def create_table(self, table_name: str, fields: list):
         field_data = ""
         for f in fields:
@@ -26,6 +24,22 @@ class DB:
         query = "CREATE TABLE %s (%s)" % (table_name, field_data)
         self.cur.execute(query)
         self.conn.commit()
+
+    def add_value(self, table: str, values: tuple):
+        query = "INSERT INTO %s VALUES %s" % (table, str(values))
+        self.cur.execute(query)
+        self.conn.commit()
+
+    def add_values(self, table: str, values: list):
+        qlen = ""
+        for i, v in enumerate(values[0]):
+            qlen += "?"
+            if not i == len(values[0]) - 1:
+                qlen += ", "
+        query = "INSERT INTO %s VALUES (%s)" % (table, qlen)
+        self.cur.executemany(query, values)
+        self.conn.commit()
+
 
 
 if __name__ == "__main__":
