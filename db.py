@@ -1,11 +1,11 @@
 import sqlite3
 
-from settings import TABLES
+from settings import TABLES, CRAWLER_DB
 
 
 class DB:
     def __init__(self):
-        self.conn = sqlite3.connect("crawler.sqlite3")
+        self.conn = sqlite3.connect(CRAWLER_DB)
         self.cur = self.conn.cursor()
 
         # create necessary tables
@@ -40,10 +40,29 @@ class DB:
         self.cur.executemany(query, values)
         self.conn.commit()
 
+    def rewrite_table_values(self, table: str, values: list):
+        del_query = "delete from %s" % table
+        self.cur.execute(del_query)
+        qlen = ""
+        for i, v in enumerate(values[0]):
+            qlen += "?"
+            if not i == len(values[0]) - 1:
+                qlen += ", "
+        query = "INSERT INTO %s VALUES (%s)" % (table, qlen)
+        self.cur.executemany(query, values)
+        self.conn.commit()
+
     def read_table(self, table: str):
         query = "select * from %s" % table
         self.cur.execute(query)
-        records = self.cur.fetchall()
+        contents = self.cur.fetchall()
+        data = []
+        for cont in contents:
+            if len(cont) == 1:
+                data.append(cont[0])
+            else:
+                data.append([item for item in cont])
+        return data
 
     def close_conn(self):
         self.conn.close()
