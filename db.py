@@ -40,6 +40,13 @@ class DB:
         self.cur.executemany(query, values)
         self.conn.commit()
 
+    def read_table(self, table: str):
+        query = "select * from %s" % table
+        self.cur.execute(query)
+        records = self.cur.fetchall()
+
+    def close_conn(self):
+        self.conn.close()
 
 
 if __name__ == "__main__":
