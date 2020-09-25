@@ -21,8 +21,6 @@ class MDE_CRAWLER:
         self.active_links = db.read_table("active_links")
         self.listings_links = db.read_table("listings_links")
         self.processed_links = db.read_table("processed_links")
-        if self.active_links == []:
-            self.first_request()
 
         # start the live graph in a separate thread
         graph_thread = threading.Thread(target=self.live_graph, args=())
@@ -30,6 +28,8 @@ class MDE_CRAWLER:
 
         try:
             while True:
+                if self.active_links == []:
+                    self.first_request()
                 for url in self.active_links:
                     # skip if url has been processed already
                     if url in self.processed_links:
@@ -43,7 +43,7 @@ class MDE_CRAWLER:
                             self.get_links(url)
                         except requests.exceptions.MissingSchema:
                             pass
-        except KeyboardInterrupt:
+        except:
             db.rewrite_table_values("active_links", self.tuplify(self.active_links))
             db.rewrite_table_values("listings_links", self.tuplify(self.listings_links))
             db.rewrite_table_values("processed_links", self.tuplify(self.processed_links))
@@ -90,6 +90,7 @@ class MDE_CRAWLER:
         plt.style.use("dark_background")
 
         fig, (links_plot, perf_plot) = plt.subplots(2)
+        fig.canvas.set_window_title('Crawler Activity Visualizer')
 
         # timestamps = []
         # try:
@@ -123,7 +124,7 @@ class MDE_CRAWLER:
                 label="Nr. of listings",
                 color="#2a9d8f",
             )
-            links_plot.set_title("Crawler Progress Visualizer")
+            links_plot.set_title("")
             links_plot.set_xlabel("Processed links")
             links_plot.set_ylabel("Number of urls")
             links_plot.legend()
