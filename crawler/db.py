@@ -5,7 +5,7 @@ from crawler.settings import TABLES, CRAWLER_DB
 
 class DB:
     def __init__(self):
-        self.conn = sqlite3.connect(CRAWLER_DB)
+        self.conn = sqlite3.connect(CRAWLER_DB, check_same_thread=False)
         self.cur = self.conn.cursor()
 
         # create necessary tables

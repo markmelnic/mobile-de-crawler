@@ -15,12 +15,17 @@ MDE_URL = "https://www.mobile.de/"
 class MDE_CRAWLER:
     def __init__(self):
         # create database object
-        db = DB()
+        self.db = DB()
 
         # initialize arrays
-        self.active_links = db.read_table("active_links")
-        self.listings_links = db.read_table("listings_links")
-        self.processed_links = db.read_table("processed_links")
+        self.active_links = self.db.read_table("active_links")
+        self.listings_links = self.db.read_table("listings_links")
+        self.processed_links = self.db.read_table("processed_links")
+
+        # start the database updater thread
+        self.db_running = True
+        db_thread = threading.Thread(target=self.database_updater, args=())
+        db_thread.start()
 
         # start the live graph in a separate thread
         graph_thread = threading.Thread(target=self.live_graph, args=())
@@ -44,9 +49,8 @@ class MDE_CRAWLER:
                         except requests.exceptions.MissingSchema:
                             pass
         except:
-            db.rewrite_table_values("active_links", self.tuplify(self.active_links))
-            db.rewrite_table_values("listings_links", self.tuplify(self.listings_links))
-            db.rewrite_table_values("processed_links", self.tuplify(self.processed_links))
+            self.db_running = False
+            db_thread.join()
             os._exit(0)
 
     # make the first request if there are no active links
@@ -75,7 +79,7 @@ class MDE_CRAWLER:
                 pass
 
     # turn list into tuples
-    def tuplify(self, data : list):
+    def tuplify(self, data: list):
         return [(d,) for d in data]
 
     # limit graph array size
@@ -85,12 +89,22 @@ class MDE_CRAWLER:
         if len(array) == LIST_SIZE:
             array.pop(0)
 
+    # database updater thread
+    def database_updater(self) -> None:
+        while True:
+            time.sleep(30)
+            self.db.rewrite_table_values("active_links", self.tuplify(self.active_links))
+            self.db.rewrite_table_values("listings_links", self.tuplify(self.listings_links))
+            self.db.rewrite_table_values("processed_links", self.tuplify(self.processed_links))
+            if self.db_running == False:
+                break
+
     # generate the live graph
     def live_graph(self):
         plt.style.use("dark_background")
 
         fig, (links_plot, perf_plot) = plt.subplots(2)
-        fig.canvas.set_window_title('Crawler Activity Visualizer')
+        fig.canvas.set_window_title("Crawler Activity Visualizer")
 
         # timestamps = []
         # try:
