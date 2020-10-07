@@ -1,4 +1,4 @@
-import requests
+import re, requests
 from bs4 import BeautifulSoup
 
 from crawler.settings import HEADERS
