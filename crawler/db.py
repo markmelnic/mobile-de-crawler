@@ -1,6 +1,6 @@
 import sqlite3
 
-from crawler.settings import TABLES, CRAWLER_DB
+from settings import TABLES, CRAWLER_DB
 
 
 class DB:

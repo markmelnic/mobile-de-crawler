@@ -1,7 +1,7 @@
 import re, requests
 from bs4 import BeautifulSoup
 
-from crawler.settings import HEADERS
+from settings import HEADERS
 
 MDE_URL = "https://www.mobile.de/"
 

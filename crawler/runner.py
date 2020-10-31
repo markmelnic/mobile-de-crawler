@@ -49,7 +49,7 @@ class CRAWLER:
     # database updater thread
     def database_updater(self, db) -> None:
         while True:
-            time.sleep(30)
+            time.sleep(60)
             db.rewrite_table_values("active_links", self.tuplify(self.active_links))
             db.rewrite_table_values("listings_links", self.tuplify(self.listings_links))
             db.rewrite_table_values("processed_links", self.tuplify(self.processed_links))
