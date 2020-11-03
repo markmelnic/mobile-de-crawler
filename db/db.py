@@ -1,19 +1,33 @@
 import sqlite3
 
-from settings import TABLES, CRAWLER_DB
+from utils import table_name
+from settings import CRAWLER_TABLES, _MDE_MAKES_DICT, DB_NAME, CAR_TABLE_DATA
 
 
 class DB:
     def __init__(self):
-        self.conn = sqlite3.connect(CRAWLER_DB, check_same_thread=False)
+        self.conn = sqlite3.connect(DB_NAME, check_same_thread=False)
         self.cur = self.conn.cursor()
 
         # create necessary tables
-        for table in TABLES:
+        for table in CRAWLER_TABLES:
             try:
                 self.create_table(table[0], table[1])
             except sqlite3.OperationalError:
                 pass
+
+        for item in _MDE_MAKES_DICT:
+            name = item["n"]
+            for model in item["models"]:
+                mod = model["m"]
+                try:
+                    self.create_table(table_name([name, mod]), CAR_TABLE_DATA)
+                except sqlite3.OperationalError:
+                    pass
+
+    # turn list into tuples
+    def tuplify(self, data: list):
+        return [(d,) for d in data]
 
     def create_table(self, table_name: str, fields: list):
         field_data = ""
@@ -26,7 +40,8 @@ class DB:
         self.conn.commit()
 
     def add_value(self, table: str, values: tuple):
-        query = "INSERT INTO %s VALUES %s" % (table, str(values))
+        query = "INSERT INTO %s VALUES %s" % (table, tuple(values,))
+        print(query)
         self.cur.execute(query)
         self.conn.commit()
 
@@ -36,7 +51,7 @@ class DB:
             qlen += "?"
             if not i == len(values[0]) - 1:
                 qlen += ", "
-        query = "INSERT INTO %s VALUES (%s)" % (table, qlen)
+        query = "INSERT INTO %s VALUES (%s)" % (table_name(table), qlen)
         self.cur.executemany(query, values)
         self.conn.commit()
 
@@ -66,7 +81,3 @@ class DB:
 
     def close_conn(self):
         self.conn.close()
-
-
-if __name__ == "__main__":
-    db = DB()
