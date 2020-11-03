@@ -4,6 +4,7 @@ from threading import Thread
 from crawler.mde_crawler import mde_crawler
 from crawler.visualizer import live_graph
 
+
 class CRAWLER:
     def __init__(self, db):
         # initialize arrays
@@ -13,15 +14,15 @@ class CRAWLER:
 
         # start the database updater thread
         self.running = True
-        db_thread = Thread(target=self.database_updater, args=(db, ))
+        db_thread = Thread(target=self.database_updater, args=(db,))
         db_thread.start()
 
         # start the live graph in a separate thread
-        graph_thread = Thread(target=live_graph, args=(self, ))
+        graph_thread = Thread(target=live_graph, args=(self,))
         graph_thread.start()
 
         # start mobile.de_crawler
-        mde_crawler_thread = Thread(target=mde_crawler, args=(self, ))
+        mde_crawler_thread = Thread(target=mde_crawler, args=(self,))
         mde_crawler_thread.start()
 
         while True:

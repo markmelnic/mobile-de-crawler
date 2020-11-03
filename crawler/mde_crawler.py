@@ -5,6 +5,7 @@ from settings import HEADERS
 
 MDE_URL = "https://www.mobile.de/"
 
+
 def mde_crawler(crawler):
     while True:
         if crawler.active_links == []:
@@ -28,6 +29,7 @@ def mde_crawler(crawler):
         if crawler.running == False:
             break
 
+
 # make the first request if there are no active links
 def first_request(crawler):
     response = requests.get(MDE_URL, headers=HEADERS)
@@ -39,6 +41,7 @@ def first_request(crawler):
     ]
     for link in links:
         crawler.active_links.append(link)
+
 
 # get new links
 def get_links(crawler, url):

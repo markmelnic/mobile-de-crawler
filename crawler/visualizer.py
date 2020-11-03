@@ -32,7 +32,10 @@ def live_graph(crawler):
 
         links_plot.clear()
         links_plot.plot(
-            crawler.pl_history, crawler.al_history, label="Active links", color="#f4a261"
+            crawler.pl_history,
+            crawler.al_history,
+            label="Active links",
+            color="#f4a261",
         )
         links_plot.plot(
             crawler.pl_history,
@@ -48,7 +51,8 @@ def live_graph(crawler):
         # performance plot
         try:
             crawler.limit_size(
-                crawler.interval_processed, crawler.pl_history[-1] - crawler.pl_history[-2]
+                crawler.interval_processed,
+                crawler.pl_history[-1] - crawler.pl_history[-2],
             )
         except IndexError:
             crawler.limit_size(crawler.interval_processed, 0)

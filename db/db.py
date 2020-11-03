@@ -1,7 +1,7 @@
 import sqlite3
 
 from utils import table_name
-from settings import CRAWLER_TABLES, _MDE_MAKES_DICT, DB_NAME, CAR_TABLE_DATA
+from settings import CRAWLER_TABLES, DB_NAME
 
 
 class DB:
@@ -15,15 +15,6 @@ class DB:
                 self.create_table(table[0], table[1])
             except sqlite3.OperationalError:
                 pass
-
-        for item in _MDE_MAKES_DICT:
-            name = item["n"]
-            for model in item["models"]:
-                mod = model["m"]
-                try:
-                    self.create_table(table_name([name, mod]), CAR_TABLE_DATA)
-                except sqlite3.OperationalError:
-                    pass
 
     # turn list into tuples
     def tuplify(self, data: list):
@@ -40,7 +31,12 @@ class DB:
         self.conn.commit()
 
     def add_value(self, table: str, values: tuple):
-        query = "INSERT INTO %s VALUES %s" % (table, tuple(values,))
+        query = "INSERT INTO %s VALUES %s" % (
+            table,
+            tuple(
+                values,
+            ),
+        )
         print(query)
         self.cur.execute(query)
         self.conn.commit()
