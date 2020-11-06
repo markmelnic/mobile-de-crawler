@@ -1,8 +1,15 @@
-import db, crawler
+import database, crawler
 
 
 if __name__ == "__main__":
     # create database object
-    database = db.DB()
+    database = database.DB()
 
-    crawler = crawler.CRAWLER(database)
+    crawler = crawler.CRAWLER(database, graph=True)
+
+    try:
+        input()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        crawler.stop(database)
