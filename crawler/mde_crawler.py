@@ -45,7 +45,10 @@ def first_request(crawler):
 
 # get new links
 def get_links(crawler, url):
-    response = requests.get(url, headers=HEADERS)
+    try:
+        response = requests.get(url, headers=HEADERS)
+    except ConnectionError:
+        return
     soup = BeautifulSoup(response.content, "html.parser")
     for url in soup.find_all("a"):
         try:
