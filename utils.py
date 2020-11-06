@@ -8,5 +8,10 @@ def table_name(title_data) -> str:
             + title_data[1].replace(" ", "-")
             + '"'
         )
-    elif "_" in title_data:
-        return '"' + title_data + '"'
+    else:
+        return '"' + title_data.replace(" ", "-") + '"'
+
+
+# turn list into tuples
+def tuplify(data: list) -> list:
+    return [(d,) for d in data]
